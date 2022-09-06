@@ -1,0 +1,6 @@
+gunicorn==20.1.0
+Jinja2==3.1.2
+MarkupSafe==2.1.1
+pydantic==1.10.2
+ton-client-py==1.37.0.0
+typing-extensions==4.3.0

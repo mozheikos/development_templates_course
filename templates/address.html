@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="content">
+<div class="search-box">
+  <form action="">
+    <label for="search-address">Address: </label>
+    <input id="search-address" type="text" name="address" placeholder="input address">
+    <input id="search-button" class="button" type="submit" value="search">
+  </form>
+</div>
+  <div class="address-info">
+    <div class="info">
+      <label><b>ID:</b> <span>{{ context.wallet.id }}</span></label>
+    </div>
+    <div class="info">
+      <label><b>Account type:</b> <span>{{ context.wallet.acc_type_name }}</span></label>
+    </div>
+    <div class="info">
+      <label><b>Balance:</b> <span>{{ context.wallet.balance }} EVER</span></label>
+    </div>
+    <div class="info">
+      <label><b>Code Hash:</b> <span>{{ context.wallet.code_hash }}</span></label>
+    </div>
+    <div class="info">
+      <label><b>Data Hash:</b> <span>{{ context.wallet.data_hash }}</span></label>
+    </div>
+  </div>
+</div>
+{% endblock %}
