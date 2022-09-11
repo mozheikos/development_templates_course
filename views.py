@@ -5,7 +5,6 @@ import datetime
 from schema import AccountInfo
 from ton_client_api import TonClientAPI
 from web_framework.ext.responses import HTMLResponse
-from web_framework.ext.status import Status
 from web_framework.ext.utils import render_html
 
 
@@ -19,8 +18,7 @@ def index_view(request: dict) -> HTMLResponse:
         'title': 'Main page',
         'year': datetime.date.today().year
     }
-    response = render_html('index.html', context)
-    return HTMLResponse(body=response, status=Status.HTTP_200_OK)
+    return render_html('index.html', context)
 
 
 def contacts_view(request: dict) -> HTMLResponse:
@@ -46,8 +44,7 @@ def contacts_view(request: dict) -> HTMLResponse:
     else:
         context['display'] = 'none'
 
-    response = render_html('contact.html', context)
-    return HTMLResponse(body=response, status=Status.HTTP_200_OK)
+    return render_html('contact.html', context)
 
 
 def address_view(request: dict) -> HTMLResponse:
@@ -73,5 +70,4 @@ def address_view(request: dict) -> HTMLResponse:
             info = api.get_info(address=address)
 
     context['wallet'] = info.dict()
-    response = render_html('address.html', context)
-    return HTMLResponse(body=response, status=Status.HTTP_200_OK)
+    return render_html('address.html', context)
