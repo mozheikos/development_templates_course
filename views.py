@@ -33,6 +33,19 @@ def contacts_view(request: dict) -> HTMLResponse:
         'title': 'Contacts',
         'year': datetime.date.today().year
     }
+    if request['method'] == 'post':
+        user = request['body'].get('user_name', '')
+        email = request['body'].get('user_email', '')
+        message = request['body'].get('user_message', '')
+        alert = f"New email message\nUser: {user}\nAddress: {email}\nText: {message}"
+        print(alert)
+
+        context['display'] = 'block'
+        context['result'] = 'Success'
+
+    else:
+        context['display'] = 'none'
+
     response = render_html('contact.html', context)
     return HTMLResponse(body=response, status=Status.HTTP_200_OK)
 
@@ -47,18 +60,18 @@ def address_view(request: dict) -> HTMLResponse:
         'title': 'Address',
         'year': datetime.date.today().year
     }
-    address = request.get('address', None)
-    if address:
-        address = address.replace(r'%3A', ':')
-        api = TonClientAPI()
-        info = api.get_info(address=address)
-    else:
-        info = AccountInfo(
-            id='Account ID',
-            acc_type_name='Frozen / Active / Deleted / Uninit',
-            code_hash='Hash of account code',
-            data_hash='Hash of account data'
-        )
+    info = AccountInfo(
+        id='Account ID',
+        acc_type_name='Frozen / Active / Deleted / Uninit',
+        code_hash='Hash of account code',
+        data_hash='Hash of account data'
+    )
+    if request['method'] == 'post':
+        address = request['body'].get('address', None)
+        if address:
+            api = TonClientAPI()
+            info = api.get_info(address=address)
+
     context['wallet'] = info.dict()
     response = render_html('address.html', context)
     return HTMLResponse(body=response, status=Status.HTTP_200_OK)
