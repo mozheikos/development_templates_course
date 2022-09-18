@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="content">
+  {% if context.created %}
+  <h2>Success</h2>
+  <a href="/education/programm?category_id={{ context.created }}" class="categories-link">Back</a>
+  {% else %}
+  <form action="" method="post" id="category-form">
+    <div class="category-form-item">
+      <label class="category-form-label" for="parent">Parent category: {% if context.parent %}{{ context.parent.title }}{% else %}None{% endif %}</label>
+      <input class="category-form-input" type="text" name="parent" id="parent" value="{% if context.parent %}{{ context.parent.id }}{% else %}{{ 0 }}{% endif %}" hidden="hidden">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="title">Title: </label>
+      <input class="category-form-input" type="text" name="title" id="title" required="required">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="description">Description: </label>
+      <input class="category-form-input" type="text" name="description" id="description" required="required">
+    </div>
+    <input type="submit" value="Add category" class="categories-link category-form-submit">
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

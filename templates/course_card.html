@@ -1,0 +1,15 @@
+<li class="category-card">
+  <h3>{{ course.title }}</h3>
+  <h4>Category: {{ course.category.title }}</h4>
+  <p>
+    {{ course.description }}
+  </p>
+  <p>
+    <i>{{ course.get_kind() }}</i>
+  </p>
+  <p>
+    <b>Info:</b>
+  </p>
+  <p>{{ course.info }}</p>
+  <a href="#" class="categories-link">Detail</a>
+</li>
