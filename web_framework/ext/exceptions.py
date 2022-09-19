@@ -11,3 +11,8 @@ class PathAlreadyRegistered(Exception):
 class BodyEncodingError(Exception):
     """Raises on errors when encode response body"""
     pass
+
+
+class PathNotSpecified(Exception):
+    """Raises when try to log by logger with not specified path"""
+    pass

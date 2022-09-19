@@ -1,11 +1,21 @@
 """Module to implement views. View must be Callable, takes 1 argument: request
 and must return instance of web_framework.ext.responses.Response or it child-class"""
 import datetime
+import os
 
+from web_framework.ext.logging import Logger
+from web_framework.ext.models import Engine
+from web_framework.ext.responses import HTMLResponse
+from web_framework.ext.utils import render_html, get_class_from_string
+
+from models import Categories, Courses
 from schema import AccountInfo
 from ton_client_api import TonClientAPI
-from web_framework.ext.responses import HTMLResponse
-from web_framework.ext.utils import render_html
+
+
+site = Engine()
+logger = Logger.get_logger('main')
+logger.path = os.path.join(os.getcwd(), 'log.log')
 
 
 def index_view(request: dict) -> HTMLResponse:
@@ -71,3 +81,86 @@ def address_view(request: dict) -> HTMLResponse:
 
     context['wallet'] = info.dict()
     return render_html('address.html', context)
+
+
+def education_view(request: dict) -> HTMLResponse:
+    context = {
+        'title': 'Education',
+        'year': datetime.date.today().year
+    }
+    return render_html('education.html', context)
+
+
+def programm_view(request: dict) -> HTMLResponse:
+
+    category_id = request['params'].get('category_id', 0)
+    category = Categories.get_by_id(int(category_id))
+
+    categories = list(filter(lambda x: x.category == category, Categories.get_list()))
+
+    if category:
+        courses = category.get_courses()
+
+    else:
+        courses = Courses.get_list()
+
+    context = {
+        'title': 'Programm',
+        'year': datetime.date.today().year,
+        'category': category,
+        'categories': categories,
+        'categories_total': len(categories),
+        'courses': courses,
+        'courses_total': len(courses)
+    }
+    return render_html('categories.html', context)
+
+
+def create_category(request: dict) -> HTMLResponse:
+
+    context = {
+        'title': 'Add category',
+        'year': datetime.date.today().year
+    }
+
+    if request['method'] == 'get':
+        parent_id = int(request['params'].get('parent_id', 0))
+        context['parent'] = Categories.get_by_id(parent_id)
+
+    else:
+        parent_id = int(request['body'].get('parent'))
+        cat_title = request['body'].get('title')
+        cat_description = request['body'].get('description')
+
+        category = site.models.create(Categories, cat_title, cat_description, parent_id or None)
+
+        context['created'] = category.id
+
+        logger.log(f"Category {category.title} created")
+    return render_html('category_form.html', context)
+
+
+def create_course(request: dict) -> HTMLResponse:
+
+    context = {
+        'title': 'Add category',
+        'year': datetime.date.today().year
+    }
+
+    if request['method'] == 'get':
+        category_id = request['params'].get('category_id')
+        context["category"] = Categories.get_by_id(int(category_id))
+        context['kinds'] = Courses.get_kinds()
+
+    else:
+        kind = get_class_from_string(Courses, request['body']['cls'])
+        category_id = int(request['body'].get('category_id'))
+        title = request['body'].get('title')
+        description = request['body'].get('description')
+        info = request['body'].get('info')
+        site.models.create(kind, title, category_id, description, info)
+        context['created'] = category_id
+
+        logger.log(f"Course {title} created")
+
+    return render_html('course_form.html', context)

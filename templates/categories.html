@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div id="content">
+  {% if context.category.category %}
+  <a href="/education/programm?category_id={{ context.category.category.id }}" class="categories-link">
+    <b>{{ context.category.category.title }}</b>
+  </a>
+  {% else %}
+  {% if context.category %}
+  <a href="/education/programm" class="categories-link">
+    <b>All categories</b>
+  </a>
+  {% endif %}
+  {% endif %}
+  <h2>{% if context.category %}{{ context.category.title }}{% else %}All categories{% endif %}</h2>
+  {% if context.category %}
+  <p>
+    {{ context.category.description }}
+  </p>
+  {% endif %}
+  <h3>Categories {{ context.categories_total }}</h3>
+  <a href="/education/add_category{% if context.category %}?parent_id={{ context.category.id }}{% endif %}" class="categories-link">
+    <b>Add category + </b>
+  </a>
+  <ul class="categories-list">
+  {% for cat in context.categories %}
+    {% include 'category_card.html' %}
+  {% endfor %}
+  </ul>
+  <h3>Courses {{ context.courses_total }}</h3>
+  {% if context.category %}
+    <a href="/education/add_course?category_id={{ context.category.id }}" class="categories-link">
+      <b>Add course + </b>
+    </a>
+  {% endif %}
+  <ul class="categories-list">
+    {% for course in context.courses %}
+      {% include 'course_card.html' %}
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

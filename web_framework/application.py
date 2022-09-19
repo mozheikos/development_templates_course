@@ -6,6 +6,7 @@ from typing import Callable, Any, Dict, List, Tuple
 from config import STATIC_PATH
 from web_framework.ext.exceptions import PathAlreadyRegistered
 from web_framework.ext.middleware import fine_path, get_params
+from web_framework.ext.models import Engine
 from web_framework.ext.responses import HTMLResponse, StaticResponse
 from web_framework.ext.status import Status
 
@@ -29,6 +30,7 @@ class App:
         return cls.__instance
 
     def __init__(self):
+        self.engine = Engine()
         self.middleware_register([get_params, fine_path])
         self.static_path = STATIC_PATH
 
