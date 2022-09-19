@@ -2,8 +2,9 @@
 Module define responses class
 """
 import json
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Optional
 
+from config import STATIC_PATH
 from web_framework.ext.exceptions import BodyEncodingError
 from web_framework.ext.status import Status
 
@@ -12,33 +13,35 @@ class Response:
     """
     Response base class
     """
-    status_code: Status = None
-    headers: List[Tuple[str, str]] = []
-    body: bytes = None
 
     def __init__(self, body: Union[str, list, dict] = '', status: Status = Status.HTTP_200_OK):
+        self.status_code: Optional[Status] = None
+        self.headers: List[Tuple[str, str]] = []
+        self.body = None
         self.set_body(body)
         self.set_status_code(status)
 
-    @staticmethod
-    def encode_body(body: str) -> bytes:
+    @classmethod
+    def encode_body(cls, body: str) -> bytes:
+        if cls.__name__ == 'StaticResponse':
+            with open(body, 'rb') as f:
+                return f.read()
+
         try:
             result = bytes(body, encoding='unicode-escape')
         except Exception:
             raise BodyEncodingError('Encoding error')
         return result
 
-    @classmethod
-    def add_headers(cls, headers: List[Tuple[str, str]]):
+    def add_headers(self, headers: List[Tuple[str, str]]):
         """
         Add headers
         :param headers: List[Tuple]
         :return:
         """
-        cls.headers.extend(headers)
+        self.headers.extend(headers)
 
-    @classmethod
-    def set_body(cls, value: Union[str, dict]):
+    def set_body(self, value: Union[str, dict]):
         """
         Set body to class property
         :param value: str
@@ -46,16 +49,15 @@ class Response:
         """
         if isinstance(value, (list, dict)):
             value = json.dumps(value, ensure_ascii=False)
-        cls.body = cls.encode_body(value)
+        self.body = self.encode_body(value)
 
-    @classmethod
-    def set_status_code(cls, status: Status):
+    def set_status_code(self, status: Status):
         """
         Set status code
         :param status: Status
         :return:
         """
-        cls.status_code = status
+        self.status_code = status
 
 
 class HTMLResponse(Response):
@@ -87,3 +89,13 @@ class JSONResponse(Response):
         """
         super(JSONResponse, self).__init__(body=body, status=status)
         self.add_headers([('Content-type', 'application/json'), ('Content-length', str(len(self.body)))])
+
+
+class StaticResponse(Response):
+    """
+    Static response
+    """
+    def __init__(self, path: str, kind: str):
+        """Init. Get file and return Response"""
+        super(StaticResponse, self).__init__(body=path, status=Status.HTTP_200_OK)
+        self.add_headers([('Content-type', kind)])

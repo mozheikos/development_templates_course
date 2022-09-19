@@ -11,14 +11,13 @@
       <button class="button">Submit</button>
     </div>
   </form>
+
+  <p><br /><br />NOTE: A contact form such as this would require some way of emailing the input to an email address.</p>
   <div class="result">
     <span class="msg" style="color: red">{{ context.result }}</span>
-    <!-- Сейчас пока информационное окно об отправке оформлю в виде формы, хоть это и не правильно, когда смогу
-     подключать файлы - конечно этим будет заниматься JavaScript-->
     <form action="" method="get">
-      <button type="submit" style="display: {{context.display}}" class="button">OK</button>
+      <button type="submit" style="display: {{ context.display }}" class="button">OK</button>
     </form>
   </div>
-  <p><br /><br />NOTE: A contact form such as this would require some way of emailing the input to an email address.</p>
 </div>
 {% endblock %}

@@ -3,115 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ context.title }}</title>
-<style>
-* {
-padding: 0;
-margin: 0;
-}
-#main {
-font-size: 20px;
-display: flex;
-flex-direction: column;
-}
-#content {
-flex-grow: 1;
-max-width: 1140px;
-margin: 20px auto;
-}
-#header {
-display: flex;
-justify-content: space-between;
-padding: 40px;
-background-color: #8d8a8a;
-}
-#logo {
-display: flex;
-flex-grow: 1;
-}
-#logo_text {
-margin-left: 30px;
-}
-.logo_colour {
-color: #FFFFFF;
-text-decoration: none;
-}
-#menubar {
-display: flex;
-flex-grow: 1;
-align-items: center;
-}
-#menu {
-display: flex;
-list-style: none;
-justify-content: space-between;
-width: 100%;
-}
-.button {
-padding: 1em 1em;
-border-radius: 5px;
-background-color: #3B3B3B;
-color: #FFFFFF;
-text-decoration: none;
-    cursor: pointer;
-}
-.submit {
-padding-top: 0;
-margin-top: 20px;
-}
-#footer {
-display: flex;
-padding-left: 50px;
-height: 60px;
-align-items: center;
-background-color: #8d8a8a;
-}
-.logo {
-color: #FFFFFF;
-text-decoration: none;
-}
-#form-contact {
-display: flex;
-flex-direction: column;
-height: available;
-}
-#search-address {
-min-width: 500px;
-line-height: 2em;
-font-size: 16px;
-}
-.search-box {
-margin: 40px;
-}
-.container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-.wrapper {
-    flex-grow: 1;
-}
-</style>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <div id="main">
     <div class="container">
         <div class="wrapper">
             <div id="header">
-          <div id="logo">
-            <div id="logo_text">
-              <h1><a href="/" class="logo">Everscale blockchain browser</a></h1>
+            {% include 'header.html' %}
             </div>
-          </div>
-          <div id="menubar">
-            <ul id="menu">
-              <li><a class="button" href="/">Home</a></li>
-              <li><a class="button" href="/address">Address info</a></li>
-              <li><a class="button" href="/contact">Contact Us</a></li>
-            </ul>
-          </div>
-        </div>
-        {% block content %}
-        {% endblock %}
+            {% block content %}
+            {% endblock %}
         </div>
         <div id="footer">
             <span>

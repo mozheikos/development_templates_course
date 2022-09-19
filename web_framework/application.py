@@ -3,9 +3,11 @@ Module define main framework handler class
 """
 from typing import Callable, Any, Dict, List, Tuple
 
+from config import STATIC_PATH
 from web_framework.ext.exceptions import PathAlreadyRegistered
 from web_framework.ext.middleware import fine_path, get_params
-from web_framework.ext.responses import HTMLResponse
+from web_framework.ext.models import Engine
+from web_framework.ext.responses import HTMLResponse, StaticResponse
 from web_framework.ext.status import Status
 
 
@@ -17,6 +19,10 @@ class App:
     __instance = None
     __router = {}
     __middleware = []
+    __static_dict = {
+            'script': ('js/', 'application/javascript'),
+            'style': ('css/', 'text/css')
+        }
 
     def __new__(cls, *args, **kwargs):
         if cls.__instance is None:
@@ -24,7 +30,9 @@ class App:
         return cls.__instance
 
     def __init__(self):
+        self.engine = Engine()
         self.middleware_register([get_params, fine_path])
+        self.static_path = STATIC_PATH
 
     @classmethod
     def path_register(cls, urls: List[Tuple[str, Callable]]):
@@ -52,6 +60,14 @@ class App:
     def not_found(request: dict) -> HTMLResponse:
         return HTMLResponse(body=f'Page {request.get("PATH_INFO")} not found', status=Status.HTTP_404_NOT_FOUND)
 
+    def static(self, file_type: str, file_name: str) -> StaticResponse:
+
+        folder, header = self.__static_dict.get(file_type)
+
+        path = self.static_path + folder + file_name.strip('/')
+        result = StaticResponse(path=path, kind=header)
+        return result
+
     def __call__(self, request: Dict[str, Any], start_response: Callable, *args, **kwargs) -> List[bytes]:
         """
         Application request handler
@@ -64,9 +80,14 @@ class App:
         for middleware in self.__middleware:
             middleware(request)
 
-        path = request.get('PATH_INFO', None)
-        handler = self.__router.get(path, self.not_found)
+        request_type = request.get('HTTP_SEC_FETCH_DEST', None)
 
-        response = handler(request)
+        path = request.get('PATH_INFO', None)
+        if request_type in self.__static_dict.keys():
+            response = self.static(request_type, path)
+        else:
+            handler = self.__router.get(path, self.not_found)
+
+            response = handler(request)
         start_response(response.status_code.value, response.headers)
         return [response.body]
