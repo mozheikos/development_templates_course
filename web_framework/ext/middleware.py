@@ -1,7 +1,6 @@
 """
 Middleware module
 """
-import json
 from quopri import decodestring
 from typing import Dict, Any
 
@@ -37,9 +36,6 @@ def get_post_data(request: Dict[str, Any]):
             k, v = item.split('=')
             request['body'][k] = decode_value(v)
 
-    print('POST data:')
-    print(json.dumps(request['body'], indent=4, ensure_ascii=False))
-
 
 def get_params(request: Dict[str, Any]):
     """
@@ -55,8 +51,6 @@ def get_params(request: Dict[str, Any]):
     if method == 'post':
         get_post_data(request)
 
-    print(f'Method: {method}')
-
     params = request.get('QUERY_STRING', '').split('&')
     request['params'] = {}
     if '' in params:
@@ -67,5 +61,3 @@ def get_params(request: Dict[str, Any]):
         request['params'][key] = decode_value(value)
 
     request['method'] = method
-    print('URL params:')
-    print(json.dumps(request['params'], indent=4, ensure_ascii=False))

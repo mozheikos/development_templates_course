@@ -1,6 +1,7 @@
 """
 Module define main framework handler class
 """
+import json
 from typing import Callable, Any, Dict, List, Tuple
 
 from config import STATIC_PATH
@@ -91,3 +92,29 @@ class App:
             response = handler(request)
         start_response(response.status_code.value, response.headers)
         return [response.body]
+
+
+class LoggingApp(App):
+    """Application with additional console logging"""
+    def __call__(self, request: Dict[str, Any], start_response: Callable, *args, **kwargs) -> List[bytes]:
+
+        response = super().__call__(request, start_response)
+
+        path = request.get('PATH_INFO', '')
+        method = request['method']
+        params = json.dumps(request.get('params', {}), ensure_ascii=False, indent=4)
+        body = json.dumps(request.get('body', {}), ensure_ascii=False, indent=4)
+        print(f"\033[34mSERVER LOG:\nPATH: {path}\nMethod: {method.upper()}\nPARAMS: {params}\nBODY: {body}\033[0m")
+
+        return response
+
+
+class FakeApp(App):
+
+    def __call__(self, request: Dict[str, Any], start_response: Callable, *args, **kwargs) -> List[bytes]:
+        """Совсем не понимаю зачем такое нужно, но сделал, раз просят"""
+        headers = [('Content-type', 'text/html')]
+        status_code = '200 OK'
+        response = b'<h1>Hello from Fake</h1>'
+        start_response(status_code, headers)
+        return [response]

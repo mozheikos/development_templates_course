@@ -10,8 +10,8 @@ urls = [
     ('/', index_view),
     ('/contact/', contacts_view),
     ('/address/', address_view),
-    ('/education/', education_view),
-    ('/education/programm/', programm_view),
-    ('/education/add_category/', create_category),
-    ('/education/add_course/', create_course)
+    # ('/education/', education_view),
+    # ('/education/programm/', programm_view),
+    # ('/education/add_category/', create_category),
+    # ('/education/add_course/', create_course)
 ]

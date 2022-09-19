@@ -3,11 +3,13 @@ from wsgiref.simple_server import make_server
 
 from middleware import middlewares
 from urls import urls
+from views import router
 from web_framework.application import App
 
 application = App()
 
 application.path_register(urls)
+application.path_register(router.urls)
 application.middleware_register(middlewares)
 
 
