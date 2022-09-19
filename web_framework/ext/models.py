@@ -1,5 +1,4 @@
 """Module with data models"""
-from typing import NamedTuple
 
 
 class Model:
