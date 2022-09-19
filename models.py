@@ -14,6 +14,14 @@ class Categories(Model):
         self.children = []
         self.courses = []
 
+    def get_courses(self) -> list:
+        """get courses list"""
+        result = [*self.courses]
+        for category in self.children:
+            result.extend(category.get_courses())
+
+        return result
+
     def set_parent_category(self, parent_id: int):
         """
         Create two-direction connection between parent and child category

@@ -99,11 +99,8 @@ def programm_view(request: dict) -> HTMLResponse:
     categories = list(filter(lambda x: x.category == category, Categories.get_list()))
 
     if category:
-        courses = []
-        courses.extend(category.courses)
+        courses = category.get_courses()
 
-        for x in category.children:
-            courses.extend(x.courses)
     else:
         courses = Courses.get_list()
 
