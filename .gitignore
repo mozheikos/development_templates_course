@@ -1,1 +1,7 @@
 .idea/
+__pycache__/
+static/__pycache__/
+static/css/__pycache__/
+templates/__pycache__/
+web_framework/__pycache__/
+web_framework/ext/__pycache__/
