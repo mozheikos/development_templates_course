@@ -21,7 +21,7 @@ class LoggerItem:
         """Log text"""
         if not self.path:
             raise PathNotSpecified("Please specify path of file by calling set_path(path: str)")
-        output = f"{self.name} - {datetime.datetime.now().strftime(self.time_format)} - {text}"
+        output = f"\n{self.name} - {datetime.datetime.now().strftime(self.time_format)} - {text}"
         with open(self.path, 'a', encoding='utf-8') as f:
             f.write(output)
         print(output)

@@ -3,10 +3,12 @@ and must return instance of web_framework.ext.responses.Response or it child-cla
 import datetime
 import os
 
+from web_framework.ext.decorators import debug
 from web_framework.ext.logging import Logger
 from web_framework.ext.models import Engine
 from web_framework.ext.responses import HTMLResponse
 from web_framework.ext.utils import render_html, get_class_from_string
+from web_framework.router import Router
 
 from models import Categories, Courses
 from schema import AccountInfo
@@ -17,7 +19,10 @@ site = Engine()
 logger = Logger.get_logger('main')
 logger.path = os.path.join(os.getcwd(), 'log.log')
 
+router = Router(namespace='education')
 
+
+@debug
 def index_view(request: dict) -> HTMLResponse:
     """
     Index handler
@@ -83,6 +88,7 @@ def address_view(request: dict) -> HTMLResponse:
     return render_html('address.html', context)
 
 
+@router.route('/')
 def education_view(request: dict) -> HTMLResponse:
     context = {
         'title': 'Education',
@@ -91,6 +97,7 @@ def education_view(request: dict) -> HTMLResponse:
     return render_html('education.html', context)
 
 
+@router.route('/programm')
 def programm_view(request: dict) -> HTMLResponse:
 
     category_id = request['params'].get('category_id', 0)
@@ -116,6 +123,7 @@ def programm_view(request: dict) -> HTMLResponse:
     return render_html('categories.html', context)
 
 
+@router.route('/add_category')
 def create_category(request: dict) -> HTMLResponse:
 
     context = {
@@ -140,6 +148,7 @@ def create_category(request: dict) -> HTMLResponse:
     return render_html('category_form.html', context)
 
 
+@router.route('/add_course')
 def create_course(request: dict) -> HTMLResponse:
 
     context = {
