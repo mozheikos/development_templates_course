@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="content">
+  <h2>Students</h2>
+    {% for student in context.students %}
+    <div>
+        <p><b>Name:</b> {{ student.name }}</p>
+        <p><b>Age:</b> {{ student.age }}</p>
+        <p><b>Email:</b> {{ student.email }}</p>
+        <p><b>Phone:</b> {{ student.phone }}</p>
+        <p><b>Courses:</b></p>
+        <p>
+            {% for course in student.courses %}
+            <spa>{{ course.title }}&nbsp;</spa>
+            {% endfor %}
+        </p>
+        <a href="/students/profile?id={{ student.id }}" class="categories-link">Profile</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

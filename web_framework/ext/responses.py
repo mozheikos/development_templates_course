@@ -4,7 +4,6 @@ Module define responses class
 import json
 from typing import Tuple, List, Union, Optional
 
-from config import STATIC_PATH
 from web_framework.ext.exceptions import BodyEncodingError
 from web_framework.ext.status import Status
 
@@ -88,7 +87,7 @@ class JSONResponse(Response):
         :param status:
         """
         super(JSONResponse, self).__init__(body=body, status=status)
-        self.add_headers([('Content-type', 'application/json'), ('Content-length', str(len(self.body)))])
+        self.add_headers([('Content-type', 'application/json')])
 
 
 class StaticResponse(Response):

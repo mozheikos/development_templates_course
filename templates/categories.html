@@ -3,12 +3,12 @@
 {% block content %}
 <div id="content">
   {% if context.category.category %}
-  <a href="/education/programm?category_id={{ context.category.category.id }}" class="categories-link">
+  <a href="/education?category_id={{ context.category.category.id }}" class="categories-link">
     <b>{{ context.category.category.title }}</b>
   </a>
   {% else %}
   {% if context.category %}
-  <a href="/education/programm" class="categories-link">
+  <a href="/education" class="categories-link">
     <b>All categories</b>
   </a>
   {% endif %}

@@ -7,11 +7,6 @@ class Model:
     increment: int = 0
     objects: dict = {}
 
-    def __init_subclass__(cls, **kwargs):
-        """Creation of objects dict keys"""
-        if cls.__base__ == Model:
-            cls.objects[cls.__name__.lower()] = {}
-
     @classmethod
     def get_id(cls) -> int:
         """Classmethod for get autoincremented id"""

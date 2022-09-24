@@ -13,3 +13,4 @@ class Status(str, Enum):
     HTTP_200_OK = '200 OK'
     HTTP_400_BAD_REQUEST = '400 Bad Request'
     HTTP_404_NOT_FOUND = '404 Not Found'
+    HTTP_405_METHOD_NOT_ALLOWED = '405 Method not allowed'

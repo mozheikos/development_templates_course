@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="content">
+  {% if context.created %}
+  <h2>Success</h2>
+  <a href="/education" class="categories-link">To Education</a>
+  {% else %}
+  <form action="" method="post" id="category-form">
+    <div class="category-form-item">
+      <label class="category-form-label" for="name">Name: </label>
+      <input class="category-form-input" type="text" name="name" id="name" required="required">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="password">Password: </label>
+      <input class="category-form-input" type="text" name="password" id="password" required="required">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="email">Email: </label>
+      <input class="category-form-input" type="text" name="email" id="email" required="required">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="phone">Phone number: </label>
+      <input class="category-form-input" type="text" name="phone" id="phone" required="required">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="age">Age: </label>
+      <input class="category-form-input" type="text" name="age" id="age" required="required">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="sub_email">Subscribe email notification: </label>
+      <input class="category-form-input" type="checkbox" value="true" checked="checked" name="subscribe_email" id="sub_email">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="sub_sms">Subscribe sms notification: </label>
+      <input class="category-form-input" type="checkbox" value="true" checked="checked" name="subscribe_sms" id="sub_sms">
+    </div>
+    <input type="submit" value="Add course" class="categories-link category-form-submit">
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

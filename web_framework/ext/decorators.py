@@ -1,5 +1,7 @@
 from datetime import datetime
-from typing import Callable, Any
+from typing import Callable, Any, Type
+
+from web_framework.ext.models import Engine
 
 
 def debug(func: Callable) -> Callable:
@@ -11,3 +13,14 @@ def debug(func: Callable) -> Callable:
         print("\033[1m\033[34m{}\033[0m".format(msg))
         return result
     return wrapper
+
+
+def register_model(cls: Type):
+
+    engine = Engine()
+    name = cls.__name__.lower()
+
+    exist = engine.models.objects.get(name, None)
+    if not exist:
+        engine.models.objects[name] = {}
+    return cls
