@@ -1,9 +1,13 @@
 """Create your models here. Pay attention that all models must be inherited
 web_framework.ext.models.Model"""
+from typing import List
 
+from web_framework.ext.decorators import register_model
 from web_framework.ext.models import Model
+from web_framework.notifications import Subject
 
 
+@register_model
 class Categories(Model):
     """Course categories"""
     def __init__(self, title: str, description: str, parent_id: int = None):
@@ -34,26 +38,48 @@ class Categories(Model):
         category.children.append(self)
         return category
 
+    def __iter__(self):
+        self.iterstate = -1
+        return self
 
+    def __next__(self):
+        self.iterstate += 1
+        if self.iterstate == len(self.courses):
+            raise StopIteration
+        return self.courses[self.iterstate]
+
+
+@register_model
 class Users(Model):
     """User"""
-    def __init__(self, name: str, age: int, is_staff: bool = False):
+
+    def __init__(self, name: str, password: str, email: str, phone: str, age: int, is_staff: bool = False):
         super().__init__()
         self.name = name
+        self.password = password
+        self.email = email
+        self.phone = phone
         self.age = age
         self.is_staff = is_staff
+        self.courses = []
+
+    def join_course(self, course):
+        course.students.append(self)
+        self.courses.append(course)
+        self.notify(f"Successfully joined course {course.title}")
 
 
-class Student(Users):
+class Student(Subject, Users):
     pass
 
 
-class Teacher(Users):
-    def __init__(self, name: str, age: int, skill: str):
-        super().__init__(name, age, True)
+class Teacher(Subject, Users):
+    def __init__(self, name: str, password: str, email: str, phone: str, age: int, skill: str):
+        super().__init__(name, password, email, phone, age, True)
         self.skill = skill
 
 
+@register_model
 class Courses(Model):
     def __init__(self, title: str, category_id: int, description: str, info: str):
         super().__init__()
@@ -62,7 +88,33 @@ class Courses(Model):
         self.title = title
         self.description = description
         self.info = info
+        self.teacher = None
+        self.students: List[Users] = []
         self.set_category(category_id)
+
+    def _notify(self, msg: str):
+        if self.teacher:
+            self.teacher.notify(msg)
+        for student in self.students:
+            student.notify(msg)
+
+    def add_teacher(self, teacher: Teacher):
+        self.teacher = teacher
+        teacher.courses.append(self)
+        msg = f"Преподаватель {teacher.name} назначен на курс {self.title}"
+        self._notify(msg)
+
+    @classmethod
+    def edit_course(cls, course_id: int, **kwargs):
+        course: Courses = cls.get_by_id(course_id)
+        for key, value in kwargs.items():
+            if not hasattr(course, key):
+                raise AttributeError(f"Wrong attribute: '{key}'")
+
+            setattr(course, key, value)
+
+        msg = f'В курсе {course.title} произошли изменения. Подробности на портале'
+        course._notify(msg)
 
     @classmethod
     def get_kinds(cls) -> list:
@@ -86,6 +138,16 @@ class Courses(Model):
 
         self.category = category
         category.courses.append(self)
+
+    def __iter__(self):
+        self.iterstate = -1
+        return self
+
+    def __next__(self):
+        self.iterstate += 1
+        if self.iterstate == len(self.students):
+            raise StopIteration
+        return self.students[self.iterstate]
 
 
 class OfflineCourse(Courses):

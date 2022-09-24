@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="content">
+  <h3>User: {{ context.student.name }}</h3>
+  <div>
+        <p><b>Name:</b> {{ context.student.name }}</p>
+        <p><b>Age:</b> {{ context.student.age }}</p>
+        <p><b>Email:</b> {{ context.student.email }}</p>
+        <p><b>Phone:</b> {{ context.student.phone }}</p>
+        <p><b>Courses:</b></p>
+        <p>
+            {% for course in context.student.courses %}
+            <spa>{{ course.title }}&nbsp;</spa>
+            {% endfor %}
+        </p>
+      <br>
+      <h3>Join to course</h3>
+        <form action="" method="post">
+          <label for="course">Course: </label>
+          <select name="course_id" id="course">
+          {% for course in context.courses %}
+            <option value="{{ course.id }}">{{ course.title }}</option>
+          {% endfor %}
+          </select>
+          <input type="hidden" name="student_id" value="{{ context.student.id }}">
+            <input type="submit" value="Join course" class="categories-link">
+        </form>
+    </div>
+</div>
+{% endblock %}

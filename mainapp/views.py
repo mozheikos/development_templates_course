@@ -3,37 +3,27 @@ and must return instance of web_framework.ext.responses.Response or it child-cla
 import datetime
 import os
 
-from web_framework.ext.decorators import debug
-from web_framework.ext.logging import Logger
+from mainapp.models import Categories, Courses, Student
+from mainapp.schema import CreateStudentRequest, CourseEditRequest, JoinCourseRequest
+from web_framework.ext.logging import Logger, FileLogger, ConsoleLogger
 from web_framework.ext.models import Engine
 from web_framework.ext.responses import HTMLResponse
 from web_framework.ext.utils import render_html, get_class_from_string
+from web_framework.notifications import EmailNotificator, SMSNotificator
 from web_framework.router import Router
-
-from models import Categories, Courses
-from schema import AccountInfo
-from ton_client_api import TonClientAPI
-
+from web_framework.views import CreateView, TemplateViewMixin, DetailView, ListView
 
 site = Engine()
+
 logger = Logger.get_logger('main')
-logger.path = os.path.join(os.getcwd(), 'log.log')
+
+file_logger = FileLogger('log.log')
+console_logger = ConsoleLogger()
+
+logger.add_logger(file_logger)
+logger.add_logger(console_logger)
 
 router = Router(namespace='education')
-
-
-@debug
-def index_view(request: dict) -> HTMLResponse:
-    """
-    Index handler
-    :param request:
-    :return:
-    """
-    context = {
-        'title': 'Main page',
-        'year': datetime.date.today().year
-    }
-    return render_html('index.html', context)
 
 
 def contacts_view(request: dict) -> HTMLResponse:
@@ -62,43 +52,16 @@ def contacts_view(request: dict) -> HTMLResponse:
     return render_html('contact.html', context)
 
 
-def address_view(request: dict) -> HTMLResponse:
-    """
-    address page
-    :param request:
-    :return:
-    """
-    context = {
-        'title': 'Address',
-        'year': datetime.date.today().year
-    }
-    info = AccountInfo(
-        id='Account ID',
-        acc_type_name='Frozen / Active / Deleted / Uninit',
-        code_hash='Hash of account code',
-        data_hash='Hash of account data'
-    )
-    if request['method'] == 'post':
-        address = request['body'].get('address', None)
-        if address:
-            api = TonClientAPI()
-            info = api.get_info(address=address)
-
-    context['wallet'] = info.dict()
-    return render_html('address.html', context)
-
-
-@router.route('/')
-def education_view(request: dict) -> HTMLResponse:
+def index_view(request: dict) -> HTMLResponse:
     context = {
         'title': 'Education',
         'year': datetime.date.today().year
     }
-    return render_html('education.html', context)
+    return render_html('index.html', context)
 
 
-@router.route('/programm')
-def programm_view(request: dict) -> HTMLResponse:
+@router.route('/')
+def education_view(request: dict) -> HTMLResponse:
 
     category_id = request['params'].get('category_id', 0)
     category = Categories.get_by_id(int(category_id))
@@ -112,7 +75,7 @@ def programm_view(request: dict) -> HTMLResponse:
         courses = Courses.get_list()
 
     context = {
-        'title': 'Programm',
+        'title': 'Education',
         'year': datetime.date.today().year,
         'category': category,
         'categories': categories,
@@ -173,3 +136,100 @@ def create_course(request: dict) -> HTMLResponse:
         logger.log(f"Course {title} created")
 
     return render_html('course_form.html', context)
+
+
+class CreateStudent(TemplateViewMixin, CreateView):
+    request_model = CreateStudentRequest
+    model = Student
+    template = 'register_form.html'
+    context_params = {
+        'title': "Registration",
+        'year': datetime.date.today().year
+    }
+
+    def get(self):
+        return {}
+
+    def post(self):
+        student = self.engine.models.create(
+            self.model,
+            **self.request.body.dict(exclude={'subscribe_email', 'subscribe_sms'})
+        )
+
+        if self.request.body.subscribe_email:
+            email_notificator = EmailNotificator('email')
+            student.subscribe(email_notificator)
+        if self.request.body.subscribe_sms:
+            sms_notificator = SMSNotificator('phone')
+            student.subscribe(sms_notificator)
+
+        return {
+            'created': True
+        }
+
+
+class StudentProfile(TemplateViewMixin, DetailView):
+    model = Student
+    collection_tag = 'student'
+    template = 'student_profile.html'
+    request_model = JoinCourseRequest
+    context_params = {
+        'title': 'Student Profile',
+        'year': datetime.date.today().year
+    }
+
+    def get(self) -> dict:
+        context = super().get()
+        courses = Courses.get_list()
+        context['courses'] = courses
+        return context
+
+    def post(self) -> dict:
+        student = Student.get_by_id(self.request.body.student_id)
+        course = Courses.get_by_id(self.request.body.course_id)
+        student.join_course(course)
+        return {
+            'student': student,
+            'courses': Courses.get_list()
+        }
+
+
+class ViewCourse(TemplateViewMixin, DetailView):
+    """Detail info about course"""
+    collection_tag = 'course'
+    model = Courses
+    template = 'course_detail.html'
+    context_params = {
+        'title': 'Course Details',
+        'year': datetime.date.today().year
+    }
+
+
+class EditCourse(TemplateViewMixin, DetailView):
+    model = Courses
+    template = 'course_edit_form.html'
+    request_model = CourseEditRequest
+    collection_tag = 'course'
+    context_params = {
+        'title': 'Edit course',
+        'year': datetime.date.today().year
+    }
+
+    def post(self):
+
+        self.model.edit_course(**self.request.body.dict(exclude_none=True))
+        course = self.model.get_by_id(self.request.body.course_id)
+        return {
+            'created': course.id,
+            'course': course
+        }
+
+
+class StudentsList(TemplateViewMixin, ListView):
+    template = 'students.html'
+    model = Student
+    collection_tag = 'students'
+    context_params = {
+        'title': 'Students',
+        'year': datetime.date.today().year
+    }

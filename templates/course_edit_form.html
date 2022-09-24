@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div id="content">
+  {% if context.created %}
+  <h2>Success</h2>
+  <a href="/education/course_detail?id={{ context.created }}" class="categories-link">Back</a>
+  {% else %}
+  <form action="" method="post" id="category-form">
+    <div class="category-form-item">
+      <input class="category-form-input" type="text" name="course_id" id="course" value="{{ context.course.id }}" hidden="hidden">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="title">Title: </label>
+      <input class="category-form-input" type="text" name="title" id="title" value="{{ context.course.title }}">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="description">Description: </label>
+      <input class="category-form-input" type="text" name="description" id="description" value="{{ context.course.description }}">
+    </div>
+    <div class="category-form-item">
+      <label class="category-form-label" for="info">Additional info: </label>
+      <input class="category-form-input" type="text" name="info" id="info" value="{{ context.course.info }}">
+    </div>
+    <input type="submit" value="Add course" class="categories-link category-form-submit">
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

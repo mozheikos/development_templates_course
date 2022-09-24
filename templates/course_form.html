@@ -3,7 +3,7 @@
 <div id="content">
   {% if context.created %}
   <h2>Success</h2>
-  <a href="/education/programm?category_id={{ context.created }}" class="categories-link">Back</a>
+  <a href="/education?category_id={{ context.created }}" class="categories-link">Back</a>
   {% else %}
   <form action="" method="post" id="category-form">
     <div class="category-form-item">
