@@ -4,8 +4,8 @@ variable
 """
 
 
-from mainapp.views import index_view, contacts_view, CreateStudent, ViewCourse, \
-    EditCourse, StudentsList, StudentProfile
+from mainapp.views import index_view, contacts_view, ViewCourse, StudentsList, \
+    CreateStudent, StudentProfile, EditCourse
 
 urls = [
     ('/', index_view),

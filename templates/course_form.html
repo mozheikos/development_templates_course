@@ -22,7 +22,7 @@
         <label class="category-form-label" for="kind">Kind of course: </label>
         <select class="category-form-input" name="cls" id="kind">
             {% for kind in context.kinds %}
-            <option value="{{ kind.__name__ }}">{{ kind.get_kind() }}</option>
+            <option value="{{ kind }}">{{ kind }}</option>
             {% endfor %}
         </select>
     </div>

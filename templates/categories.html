@@ -2,7 +2,7 @@
 
 {% block content %}
 <div id="content">
-  {% if context.category.category %}
+  {% if context.category.category_id %}
   <a href="/education?category_id={{ context.category.category.id }}" class="categories-link">
     <b>{{ context.category.category.title }}</b>
   </a>

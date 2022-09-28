@@ -1,7 +1,4 @@
 """Base class based views"""
-from typing import Type
-
-from pydantic import BaseModel
 
 from web_framework.ext.models import Engine
 from web_framework.ext.responses import JSONResponse, Response, HTMLResponse
@@ -83,7 +80,7 @@ class ListView(BaseView):
     """List view"""
 
     def get_queryset(self):
-        return self.model.get_list()
+        return self.engine.objects.get_list(self.model)
 
     def get(self) -> dict:
         """Get context data"""
@@ -97,7 +94,7 @@ class DetailView(BaseView):
 
     def get_queryset(self):
         pk = self.request.params.get('id', None)
-        return self.model.get_by_id(int(pk))
+        return self.engine.objects.get_by_id(self.model, int(pk))
 
     def get(self) -> dict:
         return {self.collection_tag: self.get_queryset()}
@@ -107,5 +104,6 @@ class CreateView(BaseView):
     """Create view"""
 
     def post(self):
-        instance = self.engine.models.create(self.model, *self.request.body.values())
+        instance = self.model(**self.request.body)
+        self.engine.objects.create(instance)
         return JSONResponse(body={'id': instance.id}, status=Status.HTTP_200_OK)

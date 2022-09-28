@@ -1,14 +1,13 @@
 """Module to implement views. View must be Callable, takes 1 argument: request
 and must return instance of web_framework.ext.responses.Response or it child-class"""
 import datetime
-import os
 
-from mainapp.models import Categories, Courses, Student
+from mainapp.models import Category, Student, Course, Teacher, StudentsCourses
 from mainapp.schema import CreateStudentRequest, CourseEditRequest, JoinCourseRequest
 from web_framework.ext.logging import Logger, FileLogger, ConsoleLogger
 from web_framework.ext.models import Engine
 from web_framework.ext.responses import HTMLResponse
-from web_framework.ext.utils import render_html, get_class_from_string
+from web_framework.ext.utils import render_html
 from web_framework.notifications import EmailNotificator, SMSNotificator
 from web_framework.router import Router
 from web_framework.views import CreateView, TemplateViewMixin, DetailView, ListView
@@ -64,15 +63,13 @@ def index_view(request: dict) -> HTMLResponse:
 def education_view(request: dict) -> HTMLResponse:
 
     category_id = request['params'].get('category_id', 0)
-    category = Categories.get_by_id(int(category_id))
-
-    categories = list(filter(lambda x: x.category == category, Categories.get_list()))
-
+    category = site.objects.get_by_id(Category, int(category_id))
     if category:
-        courses = category.get_courses()
-
+        categories = site.objects.filter(Category, 'category_id', category.id)
+        courses = site.objects.filter(Course, 'category_id', category.id)
     else:
-        courses = Courses.get_list()
+        categories = [x for x in site.objects.get_list(Category) if x.category_id is None]
+        courses = site.objects.get_list(Course)
 
     context = {
         'title': 'Education',
@@ -96,15 +93,20 @@ def create_category(request: dict) -> HTMLResponse:
 
     if request['method'] == 'get':
         parent_id = int(request['params'].get('parent_id', 0))
-        context['parent'] = Categories.get_by_id(parent_id)
+        context['parent'] = site.objects.get_by_id(Category, parent_id)
 
     else:
         parent_id = int(request['body'].get('parent'))
         cat_title = request['body'].get('title')
         cat_description = request['body'].get('description')
-
-        category = site.models.create(Categories, cat_title, cat_description, parent_id or None)
-
+        category = Category(
+            pk=None,
+            title=cat_title,
+            description=cat_description,
+            category_id=parent_id or None
+        )
+        site.objects.create(category)
+        site.objects.commit()
         context['created'] = category.id
 
         logger.log(f"Category {category.title} created")
@@ -121,16 +123,25 @@ def create_course(request: dict) -> HTMLResponse:
 
     if request['method'] == 'get':
         category_id = request['params'].get('category_id')
-        context["category"] = Categories.get_by_id(int(category_id))
-        context['kinds'] = Courses.get_kinds()
+        context["category"] = site.objects.get_by_id(Category, int(category_id))
+        context['kinds'] = ['online course', 'offline course']
 
     else:
-        kind = get_class_from_string(Courses, request['body']['cls'])
+        kind = request['body'].get('cls')
         category_id = int(request['body'].get('category_id'))
         title = request['body'].get('title')
         description = request['body'].get('description')
         info = request['body'].get('info')
-        site.models.create(kind, title, category_id, description, info)
+        course = Course(
+            pk=None,
+            title=title,
+            description=description,
+            category_id=category_id,
+            kind=kind,
+            info=info
+        )
+        site.objects.create(course)
+        site.objects.commit()
         context['created'] = category_id
 
         logger.log(f"Course {title} created")
@@ -151,17 +162,9 @@ class CreateStudent(TemplateViewMixin, CreateView):
         return {}
 
     def post(self):
-        student = self.engine.models.create(
-            self.model,
-            **self.request.body.dict(exclude={'subscribe_email', 'subscribe_sms'})
-        )
-
-        if self.request.body.subscribe_email:
-            email_notificator = EmailNotificator('email')
-            student.subscribe(email_notificator)
-        if self.request.body.subscribe_sms:
-            sms_notificator = SMSNotificator('phone')
-            student.subscribe(sms_notificator)
+        student = self.model(**self.request.body.dict())
+        self.engine.objects.create(student)
+        self.engine.objects.commit()
 
         return {
             'created': True
@@ -180,24 +183,34 @@ class StudentProfile(TemplateViewMixin, DetailView):
 
     def get(self) -> dict:
         context = super().get()
-        courses = Courses.get_list()
+        courses = self.engine.objects.get_list(Course)
+        context[self.collection_tag].courses = [
+            x.course
+            for x in self.engine.objects.filter(
+                StudentsCourses, 'student_id', context[self.collection_tag].id
+            )
+        ]
         context['courses'] = courses
         return context
 
     def post(self) -> dict:
-        student = Student.get_by_id(self.request.body.student_id)
-        course = Courses.get_by_id(self.request.body.course_id)
-        student.join_course(course)
+        student = self.engine.objects.get_by_id(Student, self.request.body.student_id)
+        join = StudentsCourses(**self.request.body.dict())
+        self.engine.objects.create(join)
+        self.engine.objects.commit()
+        student.courses = [
+            x.course for x in self.engine.objects.filter(StudentsCourses, 'student_id', student.id)
+        ]
         return {
             'student': student,
-            'courses': Courses.get_list()
+            'courses': self.engine.objects.get_list(Course)
         }
 
 
 class ViewCourse(TemplateViewMixin, DetailView):
     """Detail info about course"""
     collection_tag = 'course'
-    model = Courses
+    model = Course
     template = 'course_detail.html'
     context_params = {
         'title': 'Course Details',
@@ -206,7 +219,7 @@ class ViewCourse(TemplateViewMixin, DetailView):
 
 
 class EditCourse(TemplateViewMixin, DetailView):
-    model = Courses
+    model = Course
     template = 'course_edit_form.html'
     request_model = CourseEditRequest
     collection_tag = 'course'
@@ -216,9 +229,14 @@ class EditCourse(TemplateViewMixin, DetailView):
     }
 
     def post(self):
+        course = self.engine.objects.get_by_id(self.model, self.request.body.course_id)
+        course.edit_course(**self.request.body.dict(exclude_none=True, exclude={'course_id'}))
+        self.engine.objects.update(course)
+        self.engine.objects.commit()
+        students = [x.student for x in self.engine.objects.filter(StudentsCourses, 'course_id', course.id)]
+        for student in students:
+            student.notify(f"Course {course.title} edited.")
 
-        self.model.edit_course(**self.request.body.dict(exclude_none=True))
-        course = self.model.get_by_id(self.request.body.course_id)
         return {
             'created': course.id,
             'course': course

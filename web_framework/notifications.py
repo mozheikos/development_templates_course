@@ -4,8 +4,9 @@ from typing import Set
 
 class Notificator:
     """Base notificator"""
-    def __init__(self, notify_field_name: str):
-        self.field = notify_field_name
+    field = ''
+
+    def __init__(self):
         self.subject = None
 
     def send(self, msg: str):
@@ -19,6 +20,7 @@ class Notificator:
 
 class EmailNotificator(Notificator):
     """Send notification to email"""
+    field = 'email'
 
     def send(self, msg: str):
 
@@ -31,6 +33,7 @@ class EmailNotificator(Notificator):
 
 class SMSNotificator(Notificator):
     """Send notification to phone"""
+    field = 'phone'
 
     def send(self, msg: str):
 
