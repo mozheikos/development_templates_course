@@ -1,7 +1,8 @@
 from datetime import datetime
+from sqlite3 import connect
 from typing import Callable, Any, Type
 
-from web_framework.ext.models import Engine
+from web_framework.database.base import Mapper
 
 
 def debug(func: Callable) -> Callable:
@@ -16,11 +17,7 @@ def debug(func: Callable) -> Callable:
 
 
 def register_model(cls: Type):
-
-    engine = Engine()
-    name = cls.__name__.lower()
-
-    exist = engine.models.objects.get(name, None)
-    if not exist:
-        engine.models.objects[name] = {}
+    conn = connect('database.sqlite3')
+    mapper = Mapper(cls, conn)
+    mapper.create_table()
     return cls

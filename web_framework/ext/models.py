@@ -1,53 +1,25 @@
 """Module with data models"""
 
+from web_framework.database.base import Objects
+from web_framework.database.types import Field
+
 
 class Model:
-    """Abstract Factory"""
 
-    increment: int = 0
-    objects: dict = {}
+    __tablename__ = ''
 
-    @classmethod
-    def get_id(cls) -> int:
-        """Classmethod for get autoincremented id"""
-        cls.increment += 1
-        return cls.increment
+    def __init__(self, pk: int = None):
+        self.id = pk
 
-    @staticmethod
-    def create(cls, *args, **kwargs):
-        """Creation instances"""
+    def __hash__(self):
+        return hash((self.__class__.__tablename__, self.id))
 
-        # Не уверен, к какому паттерну это следует отнести: Абстрактная фабрика или фабричнй метод.
-        # Получается, что это вроде как фабричный метод, только не зависящий по сути от конкретного
-        # класса. Но наверное все же фабричный метод.
-        if isinstance(cls, str):
-            cls = eval(cls)
-
-        parent = cls.__mro__[-3]
-        instance = cls.__new__(cls)
-        instance.__init__(*args, **kwargs)
-        instance.id = parent.get_id()
-
-        collection = Model.objects.get(parent.__name__.lower(), None)
-
-        if collection is None:
-            raise AttributeError(f"Class {parent.__name__} must be inherited from Model")
-
-        collection[instance.id] = instance
-
-        return instance
-
-    @classmethod
-    def get_list(cls) -> list:
-        """Get all objects list"""
-        key = cls.__mro__[-3].__name__.lower()
-        return [x for x in cls.objects.get(key).values() if isinstance(x, cls)]
-
-    @classmethod
-    def get_by_id(cls, instance_id: int):
-        """Get instance by id"""
-        key = cls.__mro__[-3].__name__.lower()
-        return cls.objects[key].get(instance_id, None)
+    def dict(self):
+        result = {}
+        for k, v in self.__class__.__dict__.items():
+            if isinstance(v, Field):
+                result[k] = self.__dict__.get(k)
+        return result
 
 
 class Engine:
@@ -61,4 +33,4 @@ class Engine:
         return cls.__instance
 
     def __init__(self):
-        self.models = Model
+        self.objects = Objects()

@@ -1,158 +1,163 @@
 """Create your models here. Pay attention that all models must be inherited
 web_framework.ext.models.Model"""
-from typing import List
+from typing import Optional, List
 
+from web_framework.database.types import Field, INTEGER, TEXT
 from web_framework.ext.decorators import register_model
-from web_framework.ext.models import Model
-from web_framework.notifications import Subject
+from web_framework.ext.models import Model, Engine
+from web_framework.notifications import Subject, EmailNotificator, SMSNotificator
+
+
+engine = Engine()
 
 
 @register_model
-class Categories(Model):
-    """Course categories"""
-    def __init__(self, title: str, description: str, parent_id: int = None):
-        super().__init__()
+class Category(Model):
+
+    __tablename__ = 'categories'
+
+    id = Field(INTEGER, primary_key=True, autoincrement=True)
+    title = Field(TEXT)
+    description = Field(TEXT)
+    category_id = Field(INTEGER, nullable=True)
+
+    def __init__(self, pk: Optional[int], title: str, description: str, category_id: int):
+        super().__init__(pk)
         self.title = title
         self.description = description
-        self.category = self.set_parent_category(parent_id) if parent_id else parent_id
-        self.children = []
+        self.category_id = category_id
         self.courses = []
 
-    def get_courses(self) -> list:
-        """get courses list"""
-        result = [*self.courses]
-        for category in self.children:
-            result.extend(category.get_courses())
-
-        return result
-
-    def set_parent_category(self, parent_id: int):
-        """
-        Create two-direction connection between parent and child category
-        :param parent_id: int
-        :return: Categories
-        """
-        category = self.objects['categories'].get(parent_id, None)
-        if not category:
-            raise AttributeError(f"Category with id = {parent_id} does not exist")
-        category.children.append(self)
-        return category
-
-    def __iter__(self):
-        self.iterstate = -1
-        return self
-
-    def __next__(self):
-        self.iterstate += 1
-        if self.iterstate == len(self.courses):
-            raise StopIteration
-        return self.courses[self.iterstate]
+    @property
+    def category(self):
+        return engine.objects.get_by_id(self.__class__, self.category_id)
 
 
-@register_model
-class Users(Model):
-    """User"""
+class User(Subject, Model):
+    __tablename__ = ''
 
-    def __init__(self, name: str, password: str, email: str, phone: str, age: int, is_staff: bool = False):
-        super().__init__()
+    def __init__(
+            self, pk: Optional[int], name: str, password: str,
+            email: str, phone: str, age: int, subscribe_email: int = 0, subscribe_sms: int = 0
+    ):
+        super().__init__(pk)
         self.name = name
         self.password = password
         self.email = email
         self.phone = phone
         self.age = age
-        self.is_staff = is_staff
-        self.courses = []
-
-    def join_course(self, course):
-        course.students.append(self)
-        self.courses.append(course)
-        self.notify(f"Successfully joined course {course.title}")
-
-
-class Student(Subject, Users):
-    pass
-
-
-class Teacher(Subject, Users):
-    def __init__(self, name: str, password: str, email: str, phone: str, age: int, skill: str):
-        super().__init__(name, password, email, phone, age, True)
-        self.skill = skill
+        self.subscribe_email = subscribe_email
+        self.subscribe_sms = subscribe_sms
+        if self.subscribe_email:
+            notificator_email = EmailNotificator()
+            self.subscribe(notificator_email)
+        if self.subscribe_sms:
+            notificator_sms = SMSNotificator()
+            self.subscribe(notificator_sms)
 
 
 @register_model
-class Courses(Model):
-    def __init__(self, title: str, category_id: int, description: str, info: str):
-        super().__init__()
-        self.kind = self.get_kind()
-        self.category = None
+class Student(User):
+    __tablename__ = 'students'
+
+    id = Field(INTEGER, primary_key=True, autoincrement=True)
+    name = Field(TEXT)
+    password = Field(TEXT)
+    email = Field(TEXT)
+    phone = Field(TEXT)
+    age = Field(INTEGER)
+    subscribe_email = Field(INTEGER)
+    subscribe_sms = Field(INTEGER)
+
+    def __init__(
+            self, pk: Optional[int], name: str, password: str,
+            email: str, phone: str, age: int, subscribe_email: int = 0, subscribe_sms: int = 0
+    ):
+        super().__init__(pk, name, password, email, phone, age, subscribe_email, subscribe_sms)
+        self.courses = []
+
+
+@register_model
+class Teacher(User):
+    __tablename__ = 'teachers'
+
+    id = Field(INTEGER, primary_key=True, autoincrement=True)
+    name = Field(TEXT)
+    password = Field(TEXT)
+    email = Field(TEXT)
+    phone = Field(TEXT)
+    age = Field(INTEGER)
+    skill = Field(TEXT)
+    subscribe_email = Field(INTEGER)
+    subscribe_sms = Field(INTEGER)
+
+    def __init__(
+            self, pk: Optional[int], name: str, password: str, email: str,
+            phone: str, age: int, skill: str, subscribe_email: int = 0, subscribe_sms: int = 0
+    ):
+        super().__init__(pk, name, password, email, phone, age, subscribe_email, subscribe_sms)
+        self.skill = skill
+        self.courses = []
+
+
+@register_model
+class Course(Model):
+    __tablename__ = 'courses'
+
+    id = Field(INTEGER, primary_key=True, autoincrement=True)
+    title = Field(TEXT, nullable=False)
+    description = Field(TEXT)
+    category_id = Field(INTEGER, nullable=False)
+    teacher_id = Field(INTEGER)
+    kind = Field(TEXT, nullable=False)
+    info = Field(TEXT)
+
+    def __init__(
+            self, pk: Optional[int], title: str, description: str,
+            category_id: int, teacher_id: Optional[int], kind: str, info: str
+    ):
+        super().__init__(pk)
         self.title = title
         self.description = description
+        self.category_id = category_id
+        self.teacher_id = teacher_id
+        self.kind = kind
         self.info = info
-        self.teacher = None
-        self.students: List[Users] = []
-        self.set_category(category_id)
+        self.students: List[Student] = []
 
-    def _notify(self, msg: str):
-        if self.teacher:
-            self.teacher.notify(msg)
-        for student in self.students:
-            student.notify(msg)
+    @property
+    def teacher(self):
+        return engine.objects.get_by_id(Teacher, self.teacher_id)
 
-    def add_teacher(self, teacher: Teacher):
-        self.teacher = teacher
-        teacher.courses.append(self)
-        msg = f"Преподаватель {teacher.name} назначен на курс {self.title}"
-        self._notify(msg)
+    @property
+    def category(self):
+        return engine.objects.get_by_id(Category, self.category_id)
 
-    @classmethod
-    def edit_course(cls, course_id: int, **kwargs):
-        course: Courses = cls.get_by_id(course_id)
-        for key, value in kwargs.items():
-            if not hasattr(course, key):
-                raise AttributeError(f"Wrong attribute: '{key}'")
-
-            setattr(course, key, value)
-
-        msg = f'В курсе {course.title} произошли изменения. Подробности на портале'
-        course._notify(msg)
-
-    @classmethod
-    def get_kinds(cls) -> list:
-        """Returns list of subclasses"""
-        return cls.__subclasses__()
-
-    @classmethod
-    def get_kind(cls) -> str:
-        """Returns kind of course by classname"""
-        kind = list(cls.__name__)
-        return ''.join(map(lambda x: f" {x.lower()}" if x.isupper() else x, kind)).strip()
-
-    def set_category(self, category_id: int) -> None:
-        """
-        Create two-direction connection between course and category
-        :param category_id: int
-        """
-        category: Categories = self.objects['categories'].get(category_id, None)
-        if not category:
-            raise AttributeError(f"Category with id = {category_id} does not exist")
-
-        self.category = category
-        category.courses.append(self)
-
-    def __iter__(self):
-        self.iterstate = -1
-        return self
-
-    def __next__(self):
-        self.iterstate += 1
-        if self.iterstate == len(self.students):
-            raise StopIteration
-        return self.students[self.iterstate]
+    def edit_course(self, **kwargs):
+        for k, v in kwargs.items():
+            try:
+                self.__dict__[k] = v
+            except KeyError:
+                continue
 
 
-class OfflineCourse(Courses):
-    pass
+@register_model
+class StudentsCourses(Model):
+    __tablename__ = 'students_courses'
 
+    id = Field(INTEGER, primary_key=True, autoincrement=True)
+    student_id = Field(INTEGER, nullable=False)
+    course_id = Field(INTEGER, nullable=False)
 
-class OnlineCourse(Courses):
-    pass
+    def __init__(self, pk: Optional[int], student_id: int, course_id: int):
+        super().__init__(pk)
+        self.student_id = student_id
+        self.course_id = course_id
+
+    @property
+    def student(self):
+        return engine.objects.get_by_id(Student, self.student_id)
+
+    @property
+    def course(self):
+        return engine.objects.get_by_id(Course, self.course_id)

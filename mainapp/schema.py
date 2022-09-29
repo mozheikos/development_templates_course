@@ -24,14 +24,14 @@ class AccountInfo(BaseModel):
 
 
 class CreateStudent(BaseModel):
+    pk: int = None
     name: str
     password: str
     email: str
     phone: str
     age: int
-    is_staff: bool = False
-    subscribe_email: bool = False
-    subscribe_sms: bool = False
+    subscribe_email: int = 0
+    subscribe_sms: int = 0
 
 
 class CreateStudentRequest(BaseRequest):
@@ -55,6 +55,7 @@ class CourseEditRequest(BaseRequest):
 
 
 class JoinCourse(BaseModel):
+    pk: Optional[int]
     student_id: int
     course_id: int
 
