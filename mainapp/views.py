@@ -2,13 +2,12 @@
 and must return instance of web_framework.ext.responses.Response or it child-class"""
 import datetime
 
-from mainapp.models import Category, Student, Course, Teacher, StudentsCourses
+from mainapp.models import Category, Student, Course, StudentsCourses
 from mainapp.schema import CreateStudentRequest, CourseEditRequest, JoinCourseRequest
 from web_framework.ext.logging import Logger, FileLogger, ConsoleLogger
 from web_framework.ext.models import Engine
 from web_framework.ext.responses import HTMLResponse
 from web_framework.ext.utils import render_html
-from web_framework.notifications import EmailNotificator, SMSNotificator
 from web_framework.router import Router
 from web_framework.views import CreateView, TemplateViewMixin, DetailView, ListView
 

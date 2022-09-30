@@ -1,6 +1,6 @@
 """Module for logger"""
 import datetime
-from typing import Dict, Union, List
+from typing import Dict, List
 
 from web_framework.ext.exceptions import PathNotSpecified
 
